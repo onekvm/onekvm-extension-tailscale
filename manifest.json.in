@@ -1,0 +1,64 @@
+{
+  "manifest_version": 1,
+  "id": "tailscale",
+  "i18n": {
+    "default": {"name": "Tailscale", "description": "Connect OneKVM to a Tailscale network."},
+    "zh": {"name": "Tailscale", "description": "将 OneKVM 连接到 Tailscale 网络。"},
+    "zh-TW": {"name": "Tailscale", "description": "將 OneKVM 連接到 Tailscale 網路。"}
+  },
+  "version": "@VERSION@",
+  "api_version": 2,
+  "architecture": "@ARCH@",
+  "kind": "service",
+  "entrypoint": "bin/onekvm-tailscale-controller",
+  "kernel_modules": ["tun"],
+  "permissions": ["network", "network-admin"],
+  "capabilities": [],
+  "services": [{
+    "id": "tailscaled",
+    "i18n": {
+      "default": {"name": "Tailscale daemon", "description": "Private Tailscale network client."},
+      "zh": {"name": "Tailscale 服务", "description": "私有 Tailscale 网络客户端。"},
+      "zh-TW": {"name": "Tailscale 服務", "description": "私有 Tailscale 網路用戶端。"}
+    }
+  }],
+  "icon": {"source": "custom", "path": "web/logo.svg"},
+  "page": {"title": "Tailscale", "renderer": "vue", "entrypoint": "web/page.js", "icon": {"source": "custom", "path": "web/logo.svg"}},
+  "controller": {"runtime": "executable", "entrypoint": "bin/onekvm-tailscale-controller", "arguments": ["--controller"], "timeout_seconds": 30},
+  "methods": {"status": {}, "connect": {}, "disconnect": {}, "logout": {}},
+  "settings_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["auth_key", "hostname", "control_url", "accept_routes", "shields_up", "port"],
+    "properties": {
+      "auth_key": {
+        "type": "string", "format": "password", "title": "Authentication key", "default": "", "maxLength": 4096,
+        "i18n": {"default": "Authentication key", "zh": "认证密钥", "zh-TW": "驗證金鑰"}
+      },
+      "hostname": {
+        "type": "string", "title": "System hostname", "default": "", "maxLength": 253, "readOnly": true,
+        "i18n": {"default": "System hostname", "zh": "系统主机名", "zh-TW": "系統主機名稱"}
+      },
+      "control_url": {
+        "type": "string", "format": "address", "title": "Control server URL", "default": "", "maxLength": 2048,
+        "i18n": {"default": "Control server URL", "zh": "控制服务器 URL", "zh-TW": "控制伺服器 URL"}
+      },
+      "accept_routes": {
+        "type": "boolean", "title": "Accept advertised routes", "default": false,
+        "i18n": {"default": "Accept advertised routes", "zh": "接受广播路由", "zh-TW": "接受廣播路由"}
+      },
+      "shields_up": {
+        "type": "boolean", "title": "Block incoming connections", "default": false,
+        "i18n": {"default": "Block incoming connections", "zh": "阻止传入连接", "zh-TW": "阻止傳入連線"}
+      },
+      "port": {
+        "type": "integer", "title": "UDP port", "default": 41641, "minimum": 0, "maximum": 65535,
+        "i18n": {"default": "UDP port", "zh": "UDP 端口", "zh-TW": "UDP 連接埠"}
+      }
+    }
+  },
+  "secret_fields": ["/auth_key"],
+  "memory_budget": "48M",
+  "resource_limits": {"memory_max": "64M", "cpu_quota": "50%", "tasks_max": 96, "limit_nofile": 1024},
+  "healthcheck": {"type": "exec", "command": ["bin/onekvm-tailscale-controller", "--health"], "timeout_seconds": 5}
+}

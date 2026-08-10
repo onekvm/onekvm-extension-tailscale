@@ -1,0 +1,15 @@
+<!-- Official Tailscale client artwork: https://github.com/tailscale/tailscale/blob/main/client/systray/tailscale.svg -->
+<svg width="252" height="252" viewBox="0 0 252 252" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="252" height="252" rx="63" fill="#1F1E1E"/>
+  <path d="M72 144C81.9411 144 90 135.941 90 126C90 116.059 81.9411 108 72 108C62.0589 108 54 116.059 54 126C54 135.941 62.0589 144 72 144Z" fill="white"/>
+  <path d="M126 144C135.941 144 144 135.941 144 126C144 116.059 135.941 108 126 108C116.059 108 108 116.059 108 126C108 135.941 116.059 144 126 144Z" fill="white"/>
+  <path d="M126 198C135.941 198 144 189.941 144 180C144 170.059 135.941 162 126 162C116.059 162 108 170.059 108 180C108 189.941 116.059 198 126 198Z" fill="white"/>
+  <path d="M180 144C189.941 144 198 135.941 198 126C198 116.059 189.941 108 180 108C170.059 108 162 116.059 162 126C162 135.941 170.059 144 180 144Z" fill="white"/>
+  <g opacity="0.4" fill="white">
+    <circle cx="72" cy="180" r="18"/>
+    <circle cx="180" cy="180" r="18"/>
+    <circle cx="72" cy="72" r="18"/>
+    <circle cx="126" cy="72" r="18"/>
+    <circle cx="180" cy="72" r="18"/>
+  </g>
+</svg>
