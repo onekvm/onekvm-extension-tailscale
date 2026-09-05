@@ -9,7 +9,7 @@ ONEKVM_COMPONENT_SRCREV ??= ""
 SRC_URI = "${ONEKVM_COMPONENT_GIT_URI}"
 SRCREV = "${ONEKVM_COMPONENT_SRCREV}"
 
-inherit cmake onekvm-extension
+inherit cmake pkgconfig onekvm-extension
 
 DEPENDS += "json-c"
 
