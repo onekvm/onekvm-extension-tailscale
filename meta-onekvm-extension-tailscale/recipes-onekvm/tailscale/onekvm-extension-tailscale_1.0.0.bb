@@ -28,3 +28,5 @@ EXTRA_OECMAKE += " \
 # package: the extension host owns the daemon lifecycle and state directory.
 RDEPENDS:${PN} += "tailscale"
 RDEPENDS:${PN}:append:onekvm-nanokvm = " onekvm-kernel-module-tun"
+RREPLACES:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
+RCONFLICTS:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
