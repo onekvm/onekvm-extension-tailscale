@@ -3,11 +3,12 @@
 [English](README.md) | 简体中文
 
 在不把 Tailscale 加入基础镜像的情况下，将 OneKVM 连接到 Tailscale 网络。
-扩展提供轻量的生命周期控制器和设置页面；上游 `tailscale`、`tailscaled`
-二进制文件由 OpenEmbedded 随扩展打包。
+扩展提供轻量的生命周期控制器和设置页面，并直接依赖 OpenEmbedded 提供的
+上游 `tailscale` 包。
 
-> **构建说明：** 本仓库只包含扩展源码。正式软件包由 `onekvm-distro` 中的
-> OpenEmbedded（OE）配方统一构建；本仓库不提供独立的正式构建流程。
+> **构建说明：** 组件自带的 OpenEmbedded layer 位于
+> `meta-onekvm-extension-tailscale`。正式镜像组合与组件固定 revision 仍由
+> `onekvm-distro` 管理。
 
 ## 功能
 
@@ -58,7 +59,9 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-上游 Tailscale 二进制文件由 OpenEmbedded 另行提供。
+上游 Tailscale 二进制文件由 `meta-networking` 的 `tailscale` 配方提供。控制器使用
+`/usr/bin/tailscale` 和 `/usr/sbin/tailscaled`；测试时可分别用
+`ONEKVM_TAILSCALE_CLI` 和 `ONEKVM_TAILSCALED` 覆盖。
 
 ## 许可证
 
