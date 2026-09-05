@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(onekvm_extension_tailscale LANGUAGES CXX)
 
+set(ONEKVM_EXTENSION_VERSION "0.0.0-dev" CACHE STRING "Extension version")
+set(ONEKVM_EXTENSION_ARCH "unknown" CACHE STRING "Target architecture")
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -21,7 +24,13 @@ target_include_directories(onekvm-tailscale-controller PRIVATE
 target_link_libraries(onekvm-tailscale-controller PRIVATE
   ${JSON_C_STATIC_LIBRARY} m)
 
+set(VERSION "${ONEKVM_EXTENSION_VERSION}")
+set(ARCH "${ONEKVM_EXTENSION_ARCH}")
+configure_file(manifest.json.in manifest.json @ONLY)
+
 install(TARGETS onekvm-tailscale-controller RUNTIME DESTINATION bin)
+install(FILES web/page.js web/logo.svg DESTINATION web)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manifest.json" DESTINATION .)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -29,4 +38,3 @@ if(BUILD_TESTING)
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/controller-test.sh
             $<TARGET_FILE:onekvm-tailscale-controller>)
 endif()
-

@@ -152,14 +152,11 @@ bool LoadSettings(bool allow_missing, Settings &settings, std::string &error) {
 }
 
 std::string Executable(std::string_view name) {
-  std::vector<char> buffer(4096);
-  const ssize_t length = readlink("/proc/self/exe", buffer.data(),
-                                  buffer.size() - 1);
-  if (length <= 0)
-    return "bin/" + std::string(name);
-  buffer[static_cast<std::size_t>(length)] = '\0';
-  std::filesystem::path path(buffer.data());
-  return (path.parent_path() / name).string();
+  if (name == "tailscale")
+    return EnvironmentPath("ONEKVM_TAILSCALE_CLI", "/usr/bin/tailscale");
+  if (name == "tailscaled")
+    return EnvironmentPath("ONEKVM_TAILSCALED", "/usr/sbin/tailscaled");
+  return std::string(name);
 }
 
 [[noreturn]] void Exec(std::vector<std::string> arguments) {

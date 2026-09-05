@@ -1,5 +1,4 @@
 CONTROLLER_BINARY ?= build/onekvm-tailscale-controller
-RUNTIME_BINARY ?= build/tailscaled
 PREFIX ?= /usr/local
 DESTDIR ?=
 VERSION ?= 0.0.0-dev
@@ -11,10 +10,7 @@ all:
 
 install:
 	test -x $(CONTROLLER_BINARY)
-	test -x $(RUNTIME_BINARY)
 	install -Dm0755 $(CONTROLLER_BINARY) $(DESTDIR)$(PREFIX)/bin/onekvm-tailscale-controller
-	install -Dm0755 $(RUNTIME_BINARY) $(DESTDIR)$(PREFIX)/bin/tailscaled
-	ln -s tailscaled $(DESTDIR)$(PREFIX)/bin/tailscale
 	install -Dm0644 web/page.js $(DESTDIR)$(PREFIX)/web/page.js
 	install -Dm0644 web/logo.svg $(DESTDIR)$(PREFIX)/web/logo.svg
 	install -d $(DESTDIR)$(PREFIX)

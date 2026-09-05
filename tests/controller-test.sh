@@ -5,12 +5,15 @@ binary=$1
 test_root=${TMPDIR:-/tmp}/onekvm-tailscale-controller-$$
 trap 'rm -rf "$test_root"' EXIT HUP INT TERM
 mkdir -p "$test_root/config" "$test_root/data" "$test_root/sockets"
+mkdir -p "$test_root/bin"
 printf '%s\n' '{"auth_key":"","hostname":"","control_url":"","accept_routes":false,"shields_up":false,"port":41641}' >"$test_root/config/config.json"
 
 run_controller() {
     ONEKVM_EXTENSION_CONFIG="$test_root/config" \
     ONEKVM_EXTENSION_DATA="$test_root/data" \
     ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
+    ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
+    ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
         "$binary" --controller
 }
 
@@ -32,7 +35,6 @@ printf '%s' "$disconnect_output" | grep -q '"name":"disconnect"'
 
 ONEKVM_EXTENSION_CONFIG="$test_root/config" "$binary" --health
 
-mkdir -p "$test_root/bin"
 cp "$binary" "$test_root/bin/onekvm-tailscale-controller"
 cat >"$test_root/bin/tailscaled" <<'EOF'
 #!/bin/sh
@@ -44,6 +46,8 @@ printf '%s\n' 'preserved-state' >"$test_root/data/tailscaled.state"
 ONEKVM_EXTENSION_CONFIG="$test_root/config" \
 ONEKVM_EXTENSION_DATA="$test_root/data" \
 ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
+ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
+ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
     "$test_root/bin/onekvm-tailscale-controller" --run
 grep -Fxq -- "--state=$test_root/data/tailscaled/tailscaled.state" "$test_root/data/tailscaled-arguments"
 grep -Fxq -- "--statedir=$test_root/data/tailscaled" "$test_root/data/tailscaled-arguments"
@@ -68,6 +72,8 @@ run_test_controller() {
     ONEKVM_EXTENSION_CONFIG="$test_root/config" \
     ONEKVM_EXTENSION_DATA="$test_root/data" \
     ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
+    ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
+    ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
         "$test_root/bin/onekvm-tailscale-controller" --controller
 }
 
@@ -100,6 +106,8 @@ printf '%s' "$status_output" | grep -q '"loggedIn":true'
 ONEKVM_EXTENSION_CONFIG="$test_root/config" \
 ONEKVM_EXTENSION_DATA="$test_root/data" \
 ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
+ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
+ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
     "$test_root/bin/onekvm-tailscale-controller" --oauth
 [ ! -e "$test_root/data/oauth-output" ]
 ! grep -q '^--hostname=' "$test_root/data/up-arguments"

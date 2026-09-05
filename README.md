@@ -3,12 +3,12 @@
 English | [简体中文](README.zh-CN.md)
 
 Connect OneKVM to a Tailscale network without adding Tailscale to the base
-image. The extension packages a small lifecycle controller, a settings page,
-and the upstream `tailscale` and `tailscaled` binaries through OpenEmbedded.
+image. The extension packages a small lifecycle controller and a settings
+page, and directly depends on the upstream `tailscale` OpenEmbedded package.
 
-> **Build note:** This repository contains extension sources only. Release
-> packages are built by the OpenEmbedded recipes in `onekvm-distro`; this
-> repository does not provide a standalone release build.
+> **Build note:** The component-owned OpenEmbedded layer is in
+> `meta-onekvm-extension-tailscale`. Release images and the fixed component
+> revision are still composed by `onekvm-distro`.
 
 ## Features
 
@@ -63,7 +63,10 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-The upstream Tailscale binaries are supplied separately by OpenEmbedded.
+The upstream Tailscale binaries are supplied by the `tailscale` recipe in
+`meta-networking`. The controller uses `/usr/bin/tailscale` and
+`/usr/sbin/tailscaled`; tests can override them with `ONEKVM_TAILSCALE_CLI`
+and `ONEKVM_TAILSCALED`.
 
 ## License
 
