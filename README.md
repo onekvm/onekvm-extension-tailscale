@@ -7,7 +7,7 @@ image. The extension packages a small lifecycle controller and a settings
 page, and directly depends on the upstream `tailscale` OpenEmbedded package.
 
 > **Build note:** The component-owned OpenEmbedded layer is in
-> `oe-recipes/meta-onekvm-extension-tailscale`. Release images and the fixed component
+> `oe-recipes`. Release images and the fixed component
 > revision are still composed by `onekvm-distro`.
 
 ## Features
