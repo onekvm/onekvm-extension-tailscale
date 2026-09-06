@@ -7,7 +7,7 @@
 上游 `tailscale` 包。
 
 > **构建说明：** 组件自带的 OpenEmbedded layer 位于
-> `meta-onekvm-extension-tailscale`。正式镜像组合与组件固定 revision 仍由
+> `oe-recipes/meta-onekvm-extension-tailscale`。正式镜像组合与组件固定 revision 仍由
 > `onekvm-distro` 管理。
 
 ## 功能
