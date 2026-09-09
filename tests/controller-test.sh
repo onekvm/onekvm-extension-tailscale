@@ -8,30 +8,21 @@ mkdir -p "$test_root/config" "$test_root/data" "$test_root/sockets"
 mkdir -p "$test_root/bin"
 printf '%s\n' '{"auth_key":"","hostname":"","control_url":"","accept_routes":false,"shields_up":false,"port":41641}' >"$test_root/config/config.json"
 
-run_controller() {
+run_cli() {
     ONEKVM_EXTENSION_CONFIG="$test_root/config" \
     ONEKVM_EXTENSION_DATA="$test_root/data" \
     ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
     ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
     ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
-        "$binary" --controller
+        "$binary" "$1"
 }
 
-enable_output=$(printf '%s' '{"event":"enable","extension_id":"tailscale","enabled":true}' | run_controller)
-printf '%s' "$enable_output" | grep -q '"type":"ensure"'
-printf '%s' "$enable_output" | grep -q '"type":"exec"'
-
-disable_output=$(printf '%s' '{"event":"disable","extension_id":"tailscale","enabled":false}' | run_controller)
-printf '%s' "$disable_output" | grep -q '"type":"remove_all"'
-
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"backendState"'
 
-connect_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"connect","request":null}' | run_controller)
-printf '%s' "$connect_output" | grep -q '"name":"oauth"'
-
-disconnect_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"disconnect","request":null}' | run_controller)
-printf '%s' "$disconnect_output" | grep -q '"name":"disconnect"'
+connect_output=$(run_cli connect)
+printf '%s' "$connect_output" | grep -q '"started":true'
+grep -q . "$test_root/data/oauth-wanted"
 
 ONEKVM_EXTENSION_CONFIG="$test_root/config" "$binary" --health
 
@@ -64,45 +55,45 @@ case " $* " in
         printf '%s\n' "$@" >"$ONEKVM_EXTENSION_DATA/up-arguments"
         printf '%s\n' '{"AuthURL":"https://login.example/new"}'
         ;;
+    *" down "*|*" logout "*)
+        printf '%s\n' "$@" >"$ONEKVM_EXTENSION_DATA/control-arguments"
+        ;;
 esac
 EOF
 chmod 0755 "$test_root/bin/tailscale"
 
-run_test_controller() {
-    ONEKVM_EXTENSION_CONFIG="$test_root/config" \
-    ONEKVM_EXTENSION_DATA="$test_root/data" \
-    ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \
-    ONEKVM_TAILSCALE_CLI="$test_root/bin/tailscale" \
-    ONEKVM_TAILSCALED="$test_root/bin/tailscaled" \
-        "$test_root/bin/onekvm-tailscale-controller" --controller
-}
+: >"$test_root/sockets/tailscaled.sock"
 
 printf '%s\n' '{"BackendState":"NeedsLogin"}' >"$test_root/data/status-fixture"
 printf '%s\n' '{"AuthURL":"https://login.example/old"}' >"$test_root/data/oauth-output"
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_test_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"loggedIn":false'
 printf '%s' "$status_output" | grep -Fq '"authURL":"https:\/\/login.example\/old"'
 
 printf '%s\n' '{"BackendState":"Starting"}' >"$test_root/data/status-fixture"
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_test_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"authURL":""'
 
 printf '%s\n' '{"BackendState":"Running","AuthURL":"https://login.example/stale","Self":{"HostName":"onekvm","TailscaleIPs":["100.64.0.1"]}}' >"$test_root/data/status-fixture"
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_test_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"loggedIn":true'
 printf '%s' "$status_output" | grep -q '"authURL":""'
 [ ! -e "$test_root/data/oauth-output" ]
 
 printf '%s\n' '{"BackendState":"NeedsLogin","AuthURL":"https://login.example/stale"}' >"$test_root/data/status-fixture"
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_test_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"loggedIn":false'
 printf '%s' "$status_output" | grep -q '"authURL":""'
 
 printf '%s\n' '{"BackendState":"Stopped","Self":{"HostName":"onekvm","TailscaleIPs":["100.64.0.1"]}}' >"$test_root/data/status-fixture"
-status_output=$(printf '%s' '{"event":"invoke","extension_id":"tailscale","enabled":true,"method":"status","request":null}' | run_test_controller)
+status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"loggedIn":true'
 
-: >"$test_root/sockets/tailscaled.sock"
+disconnect_output=$(run_cli disconnect)
+printf '%s' "$disconnect_output" | grep -q '"connected":false'
+[ ! -e "$test_root/data/oauth-wanted" ]
+grep -Fxq down "$test_root/data/control-arguments"
+
 ONEKVM_EXTENSION_CONFIG="$test_root/config" \
 ONEKVM_EXTENSION_DATA="$test_root/data" \
 ONEKVM_EXTENSION_SOCKET="$test_root/sockets" \

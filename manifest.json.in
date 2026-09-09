@@ -24,8 +24,12 @@
   }],
   "icon": {"source": "custom", "path": "web/logo.svg"},
   "page": {"title": "Tailscale", "renderer": "vue", "entrypoint": "web/page.js", "icon": {"source": "custom", "path": "web/logo.svg"}},
-  "controller": {"runtime": "executable", "entrypoint": "bin/onekvm-tailscale-controller", "arguments": ["--controller"], "timeout_seconds": 30},
-  "methods": {"status": {}, "connect": {}, "disconnect": {}, "logout": {}},
+  "methods": [
+    {"name": "status", "command": ["bin/onekvm-tailscale-controller", "status"]},
+    {"name": "connect", "command": ["bin/onekvm-tailscale-controller", "connect"]},
+    {"name": "disconnect", "command": ["bin/onekvm-tailscale-controller", "disconnect"], "timeout_seconds": 15},
+    {"name": "logout", "command": ["bin/onekvm-tailscale-controller", "logout"], "timeout_seconds": 15}
+  ],
   "settings_schema": {
     "type": "object",
     "additionalProperties": false,

@@ -1,6 +1,7 @@
 #include <json-c/json.h>
 
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -21,8 +22,6 @@
 #include <vector>
 
 namespace {
-
-constexpr std::string_view kExtensionID = "tailscale";
 
 struct Settings {
   std::string auth_key;
@@ -316,12 +315,10 @@ void RemoveOAuthOutput() {
   std::filesystem::remove(DataPath() + "/oauth-output", ignored);
 }
 
-void PrintPlan(json_object *response) {
-  json_object *plan = json_object_new_object();
-  json_object_object_add(plan, "actions", json_object_new_array());
-  json_object_object_add(plan, "response", response);
-  std::cout << json_object_to_json_string_ext(plan, JSON_C_TO_STRING_PLAIN);
-  json_object_put(plan);
+void PrintJSON(json_object *response) {
+  std::cout << json_object_to_json_string_ext(response, JSON_C_TO_STRING_PLAIN)
+            << '\n';
+  json_object_put(response);
 }
 
 void PrintStatus() {
@@ -388,7 +385,7 @@ void PrintStatus() {
   json_object_object_add(response, "addresses", addresses);
   if (status != nullptr)
     json_object_put(status);
-  PrintPlan(response);
+  PrintJSON(response);
 }
 
 bool WriteSecret(const std::string &path, const std::string &secret,
@@ -418,74 +415,143 @@ bool WriteSecret(const std::string &path, const std::string &secret,
   return true;
 }
 
-bool Controller(std::string &error) {
-  std::string input((std::istreambuf_iterator<char>(std::cin)),
-                    std::istreambuf_iterator<char>());
-  json_object *root = ParseJSON(input, error);
-  if (root == nullptr || !json_object_is_type(root, json_type_object)) {
-    if (root != nullptr)
-      json_object_put(root);
-    return false;
+int RunDaemon(std::string &error);
+int Apply(std::string &error);
+int RunOAuth(std::string &error);
+
+std::string OAuthWantedPath() { return DataPath() + "/oauth-wanted"; }
+
+std::string ReadOAuthWanted() {
+  std::string data;
+  std::string ignored;
+  if (!ReadFile(OAuthWantedPath(), true, data, ignored))
+    return {};
+  while (!data.empty() &&
+         std::isspace(static_cast<unsigned char>(data.back())))
+    data.pop_back();
+  return data;
+}
+
+void RemoveOAuthWanted() {
+  std::error_code ignored;
+  std::filesystem::remove(OAuthWantedPath(), ignored);
+  RemoveOAuthOutput();
+}
+
+int WaitPid(pid_t pid) {
+  int status = 0;
+  while (waitpid(pid, &status, 0) < 0) {
+    if (errno != EINTR)
+      return -1;
   }
-  json_object *event_value = nullptr;
-  json_object *id_value = nullptr;
-  json_object *enabled_value = nullptr;
-  const bool valid =
-      json_object_object_get_ex(root, "event", &event_value) &&
-      json_object_is_type(event_value, json_type_string) &&
-      json_object_object_get_ex(root, "extension_id", &id_value) &&
-      json_object_is_type(id_value, json_type_string) &&
-      json_object_object_get_ex(root, "enabled", &enabled_value) &&
-      json_object_is_type(enabled_value, json_type_boolean);
-  if (!valid || std::string_view(json_object_get_string(id_value)) !=
-                    kExtensionID) {
-    json_object_put(root);
-    error = "unsupported controller event";
-    return false;
+  return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+pid_t Spawn(int (*fn)(std::string &), std::string &error) {
+  const pid_t pid = fork();
+  if (pid < 0) {
+    error = std::string("fork: ") + std::strerror(errno);
+    return -1;
   }
-  const std::string event = json_object_get_string(event_value);
-  const bool enabled = json_object_get_boolean(enabled_value) != 0;
-  if (event == "invoke") {
-    json_object *method_value = nullptr;
-    const bool method_valid =
-        json_object_object_get_ex(root, "method", &method_value) &&
-        json_object_is_type(method_value, json_type_string);
-    const std::string method =
-        method_valid ? json_object_get_string(method_value) : "";
-    json_object_put(root);
-    if (method == "status") {
-      PrintStatus();
-      return true;
+  if (pid == 0) {
+    std::string child_error;
+    const int result = fn(child_error);
+    if (result != 0 && !child_error.empty())
+      std::cerr << "onekvm-tailscale-controller: " << child_error << '\n';
+    std::_Exit(result == 0 ? 0 : 1);
+  }
+  return pid;
+}
+
+int Connect(std::string &error) {
+  std::error_code filesystem_error;
+  std::filesystem::create_directories(DataPath(), filesystem_error);
+  if (filesystem_error) {
+    error = "create data directory: " + filesystem_error.message();
+    return 1;
+  }
+  std::ofstream output(OAuthWantedPath(), std::ios::trunc);
+  if (!output) {
+    error = "write oauth request";
+    return 1;
+  }
+  output << std::chrono::steady_clock::now().time_since_epoch().count() << '\n';
+  json_object *response = json_object_new_object();
+  json_object_object_add(response, "started", json_object_new_boolean(1));
+  PrintJSON(response);
+  return 0;
+}
+
+int RunNamed(std::string_view command, const char *key, bool value,
+             std::string &error) {
+  RemoveOAuthWanted();
+  const std::string socket = SocketPath() + "/tailscaled.sock";
+  if (!WaitForSocket(socket, error))
+    return 1;
+  std::string output;
+  const int result =
+      RunCommandCapture(CLI(socket, {std::string(command)}), output);
+  if (result != 0) {
+    error = output.empty() ? "tailscale " + std::string(command) + " failed"
+                           : output;
+    return 1;
+  }
+  json_object *response = json_object_new_object();
+  json_object_object_add(response, key, json_object_new_boolean(value));
+  PrintJSON(response);
+  return 0;
+}
+
+int Service(std::string &error) {
+  const pid_t daemon = Spawn(RunDaemon, error);
+  if (daemon < 0)
+    return 1;
+  const std::string socket = SocketPath() + "/tailscaled.sock";
+  if (!WaitForSocket(socket, error)) {
+    kill(daemon, SIGTERM);
+    WaitPid(daemon);
+    return 1;
+  }
+  const pid_t apply = Spawn(Apply, error);
+  if (apply > 0)
+    WaitPid(apply);
+
+  pid_t oauth = -1;
+  std::string oauth_token;
+  for (;;) {
+    int status = 0;
+    const pid_t ended = waitpid(-1, &status, WNOHANG);
+    if (ended < 0 && errno != EINTR) {
+      error = "wait: " + std::string(std::strerror(errno));
+      return 1;
     }
-    if (method == "connect") {
-      std::cout << R"({"actions":[{"type":"remove","name":"oauth"},{"type":"ensure","name":"oauth","command":["bin/onekvm-tailscale-controller","--oauth"],"restart":"no"}],"response":{"started":true}})";
-      return true;
+    if (ended == daemon) {
+      if (oauth > 0) {
+        kill(oauth, SIGTERM);
+        WaitPid(oauth);
+      }
+      error = "tailscaled exited";
+      return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
     }
-    if (method == "disconnect") {
-      std::cout << R"({"actions":[{"type":"remove","name":"oauth"},{"type":"exec","name":"disconnect","command":["bin/onekvm-tailscale-controller","--disconnect"],"timeout_seconds":15}],"response":{"connected":false}})";
-      return true;
+    if (ended == oauth)
+      oauth = -1;
+
+    const std::string wanted = ReadOAuthWanted();
+    if (wanted != oauth_token) {
+      if (oauth > 0) {
+        kill(oauth, SIGTERM);
+        WaitPid(oauth);
+        oauth = -1;
+      }
+      oauth_token = wanted;
+      if (!wanted.empty()) {
+        oauth = Spawn(RunOAuth, error);
+        if (oauth < 0)
+          oauth = -1;
+      }
     }
-    if (method == "logout") {
-      std::cout << R"({"actions":[{"type":"remove","name":"oauth"},{"type":"exec","name":"logout","command":["bin/onekvm-tailscale-controller","--logout"],"timeout_seconds":15}],"response":{"loggedOut":true}})";
-      return true;
-    }
-    error = "unknown public method " + method;
-    return false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
-  json_object_put(root);
-  if (event != "enable" && event != "disable" && event != "reconcile" &&
-      event != "config_changed") {
-    error = "unsupported controller lifecycle event " + event;
-    return false;
-  }
-  if (!enabled || event == "disable") {
-    std::cout << R"({"actions":[{"type":"remove_all"}]})";
-  } else if (event == "config_changed") {
-    std::cout << R"({"actions":[{"type":"remove_all"},{"type":"ensure","name":"tailscaled","command":["bin/onekvm-tailscale-controller","--run"],"restart":"on-failure"},{"type":"exec","name":"apply","command":["bin/onekvm-tailscale-controller","--apply"],"timeout_seconds":30}]})";
-  } else {
-    std::cout << R"({"actions":[{"type":"ensure","name":"tailscaled","command":["bin/onekvm-tailscale-controller","--run"],"restart":"on-failure"},{"type":"exec","name":"apply","command":["bin/onekvm-tailscale-controller","--apply"],"timeout_seconds":30}]})";
-  }
-  return true;
 }
 
 int RunDaemon(std::string &error) {
@@ -608,37 +674,38 @@ int RunOAuth(std::string &error) {
   return result;
 }
 
-int RunControl(std::string_view command, std::string &error) {
-  const std::string socket = SocketPath() + "/tailscaled.sock";
-  if (!WaitForSocket(socket, error))
-    return 1;
-  RemoveOAuthOutput();
-  Exec(CLI(socket, {std::string(command)}));
-}
-
 } // namespace
 
 int main(int argc, char **argv) {
   std::string error;
   int result = 1;
-  if (argc == 2 && std::string_view(argv[1]) == "--controller") {
-    result = Controller(error) ? 0 : 1;
-  } else if (argc == 2 && std::string_view(argv[1]) == "--health") {
+  const std::string_view command = argc >= 2 ? argv[1] : "--service";
+  if (argc > 2) {
+    error = "usage: onekvm-tailscale-controller "
+            "[--service|status|connect|disconnect|logout|--health|--run|--apply|--oauth]";
+  } else if (command == "--service") {
+    result = Service(error);
+  } else if (command == "status") {
+    PrintStatus();
+    result = 0;
+  } else if (command == "connect") {
+    result = Connect(error);
+  } else if (command == "disconnect") {
+    result = RunNamed("down", "connected", false, error);
+  } else if (command == "logout") {
+    result = RunNamed("logout", "loggedOut", true, error);
+  } else if (command == "--health") {
     Settings settings;
     result = LoadSettings(true, settings, error) ? 0 : 1;
-  } else if (argc == 2 && std::string_view(argv[1]) == "--run") {
+  } else if (command == "--run") {
     result = RunDaemon(error);
-  } else if (argc == 2 && std::string_view(argv[1]) == "--apply") {
+  } else if (command == "--apply") {
     result = Apply(error);
-  } else if (argc == 2 && std::string_view(argv[1]) == "--oauth") {
+  } else if (command == "--oauth") {
     result = RunOAuth(error);
-  } else if (argc == 2 && std::string_view(argv[1]) == "--disconnect") {
-    result = RunControl("down", error);
-  } else if (argc == 2 && std::string_view(argv[1]) == "--logout") {
-    result = RunControl("logout", error);
   } else {
     error = "usage: onekvm-tailscale-controller "
-            "[--controller|--health|--run|--apply|--oauth|--disconnect|--logout]";
+            "[--service|status|connect|disconnect|logout|--health|--run|--apply|--oauth]";
   }
   if (result != 0)
     std::cerr << "onekvm-tailscale-controller: " << error << '\n';
