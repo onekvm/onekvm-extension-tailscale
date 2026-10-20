@@ -197,7 +197,8 @@
       .ts-auth a { text-decoration: none; }
       .ts-settings > label, .ts-grid > label { display: grid; gap: 7px; }
       .ts-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 13px; }
-      .ts-grid .ts-switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .ts-grid .ts-switch { display: grid; gap: 7px; }
+      .ts-grid .n-switch { justify-self: start; }
       .ts-save { display: flex; justify-content: flex-end; }
     `],
   })
