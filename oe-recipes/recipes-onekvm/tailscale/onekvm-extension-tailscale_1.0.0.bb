@@ -29,3 +29,5 @@ EXTRA_OECMAKE += " \
 RDEPENDS:${PN} += "tailscale onekvm-kernel-module-tun"
 RREPLACES:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
 RCONFLICTS:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
+
+FILES:${PN} += "${ONEKVM_EXTENSION_ROOT}/screen-app"
