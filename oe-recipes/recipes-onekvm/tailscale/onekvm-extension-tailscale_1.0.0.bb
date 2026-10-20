@@ -2,7 +2,7 @@ SUMMARY = "OneKVM Tailscale service extension"
 HOMEPAGE = "https://github.com/onekvm/onekvm-extension-tailscale"
 LICENSE = "GPL-3.0-only"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=1ebbd3e34237af26da5dc08a4e440464"
-PR = "r3"
+PR = "r4"
 
 ONEKVM_COMPONENT_GIT_URI ??= "git://github.com/onekvm/onekvm-extension-tailscale.git;protocol=https;branch=main"
 ONEKVM_COMPONENT_SRCREV ??= ""
@@ -26,7 +26,6 @@ EXTRA_OECMAKE += " \
 # meta-networking's tailscale package owns both /usr/bin/tailscale and
 # /usr/sbin/tailscaled. Deliberately do not depend on its tailscaled service
 # package: the extension host owns the daemon lifecycle and state directory.
-RDEPENDS:${PN} += "tailscale"
-RDEPENDS:${PN}:append:onekvm-nanokvm = " onekvm-kernel-module-tun"
+RDEPENDS:${PN} += "tailscale onekvm-kernel-module-tun"
 RREPLACES:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
 RCONFLICTS:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
