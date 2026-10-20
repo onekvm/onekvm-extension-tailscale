@@ -24,8 +24,8 @@
 或镜像安装，然后使用插件管理器控制扩展：
 
 ```sh
-onekvm-plugin-manager enable tailscale
-onekvm-plugin-manager disable tailscale
+onekvm-extension enable tailscale
+onekvm-extension disable tailscale
 ```
 
 扩展需要 `tun` 内核模块。

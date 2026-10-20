@@ -24,8 +24,8 @@ The package name is `onekvm-extension-tailscale`. Install it through your
 OneKVM distribution package or image, then manage it with the plugin manager:
 
 ```sh
-onekvm-plugin-manager enable tailscale
-onekvm-plugin-manager disable tailscale
+onekvm-extension enable tailscale
+onekvm-extension disable tailscale
 ```
 
 The extension requires the `tun` kernel module.
