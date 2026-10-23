@@ -68,3 +68,7 @@ ctest --test-dir build --output-on-failure
 本项目使用 GNU General Public License v3.0，完整条款见
 [`LICENSE`](LICENSE)。随包提供的 Tailscale 二进制文件及其依赖继续使用
 各自的上游许可证。
+
+可选屏幕 App 的 TypeScript/TSX 源码位于
+[`screen-app/src`](screen-app/src)，按组件、状态和语言包拆分。
+构建方式见 [`screen-app/README.md`](screen-app/README.md)；JS/PAK 由打包流程生成，不提交到 Git。

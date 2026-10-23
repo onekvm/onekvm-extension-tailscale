@@ -1,3 +1,4 @@
+SCREEN_APP_DIR ?= screen-app/dist
 CONTROLLER_BINARY ?= build/onekvm-tailscale-controller
 PREFIX ?= /usr/local
 DESTDIR ?=
@@ -18,5 +19,5 @@ install:
 		manifest.json.in >$(DESTDIR)$(PREFIX)/manifest.json
 	chmod 0644 $(DESTDIR)$(PREFIX)/manifest.json
 	install -d $(DESTDIR)$(PREFIX)/screen-app
-	install -Dm0644 screen-app/main.vue-vapor.js $(DESTDIR)$(PREFIX)/screen-app/main.vue-vapor.js
-	install -Dm0644 screen-app/main.vue-vapor.pak $(DESTDIR)$(PREFIX)/screen-app/main.vue-vapor.pak
+	install -Dm0644 $(SCREEN_APP_DIR)/main.vue-vapor.js $(DESTDIR)$(PREFIX)/screen-app/main.vue-vapor.js
+	install -Dm0644 $(SCREEN_APP_DIR)/main.vue-vapor.pak $(DESTDIR)$(PREFIX)/screen-app/main.vue-vapor.pak
