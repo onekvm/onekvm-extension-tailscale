@@ -30,6 +30,8 @@ configure_file(manifest.json.in manifest.json @ONLY)
 
 install(TARGETS onekvm-tailscale-controller RUNTIME DESTINATION bin)
 install(FILES web/page.js web/logo.svg DESTINATION web)
+install(FILES screen-app/main.vue-vapor.js screen-app/main.vue-vapor.pak
+  DESTINATION screen-app)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manifest.json" DESTINATION .)
 
 include(CTest)
