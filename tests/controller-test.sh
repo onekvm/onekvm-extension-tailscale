@@ -20,11 +20,10 @@ run_cli() {
 status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"backendState"'
 
-connect_output=$(run_cli connect)
-printf '%s' "$connect_output" | grep -q '"started":true'
-grep -q . "$test_root/data/oauth-wanted"
-
-ONEKVM_EXTENSION_CONFIG="$test_root/config" "$binary" --health
+if run_cli --health; then echo "missing runtimes passed health" >&2; exit 1; fi
+result=0
+run_cli --service || result=$?
+[ "$result" -eq 78 ]
 
 cp "$binary" "$test_root/bin/onekvm-tailscale-controller"
 cat >"$test_root/bin/tailscaled" <<'EOF'
@@ -62,13 +61,27 @@ esac
 EOF
 chmod 0755 "$test_root/bin/tailscale"
 
+connect_output=$(run_cli connect)
+printf '%s' "$connect_output" | grep -q '"started":true'
+grep -q . "$test_root/data/oauth-wanted"
+
+
+
 : >"$test_root/sockets/tailscaled.sock"
+run_cli --health
+printf '%s\nstarting\n' "$(cat "$test_root/data/oauth-wanted")" >"$test_root/data/oauth-state"
 
 printf '%s\n' '{"BackendState":"NeedsLogin"}' >"$test_root/data/status-fixture"
 printf '%s\n' '{"AuthURL":"https://login.example/old"}' >"$test_root/data/oauth-output"
 status_output=$(run_cli status)
 printf '%s' "$status_output" | grep -q '"loggedIn":false'
 printf '%s' "$status_output" | grep -Fq '"authURL":"https:\/\/login.example\/old"'
+
+# An expired node keeps its old IPs; NeedsLogin still needs a new QR.
+printf '%s\n' '{"BackendState":"NeedsLogin","Self":{"TailscaleIPs":["100.64.0.1"]}}' >"$test_root/data/status-fixture"
+status_output=$(run_cli status)
+printf '%s' "$status_output" | grep -q '"loggedIn":false'
+printf '%s' "$status_output" | grep -q '"authState":"pending"'
 
 printf '%s\n' '{"BackendState":"Starting"}' >"$test_root/data/status-fixture"
 status_output=$(run_cli status)

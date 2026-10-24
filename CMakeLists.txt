@@ -33,7 +33,8 @@ install(FILES web/page.js web/logo.svg DESTINATION web)
 set(ONEKVM_SCREEN_APP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/screen-app/dist" CACHE PATH
   "Directory containing the compiled screen App")
 install(FILES "${ONEKVM_SCREEN_APP_DIR}/main.vue-vapor.js"
-  "${ONEKVM_SCREEN_APP_DIR}/main.vue-vapor.pak" DESTINATION screen-app)
+  "${ONEKVM_SCREEN_APP_DIR}/main.vue-vapor.pak"
+  "${ONEKVM_SCREEN_APP_DIR}/icon.bin" DESTINATION screen-app)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/manifest.json" DESTINATION .)
 
 include(CTest)
@@ -41,4 +42,14 @@ if(BUILD_TESTING)
   add_test(NAME controller-lifecycle
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/controller-test.sh
             $<TARGET_FILE:onekvm-tailscale-controller>)
+endif()
+
+include(CTest)
+if(BUILD_TESTING AND NOT CMAKE_CROSSCOMPILING)
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+  if(Python3_FOUND)
+    add_test(NAME controller-events COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/service-test.py
+      $<TARGET_FILE:onekvm-tailscale-controller> tailscale)
+  endif()
 endif()
