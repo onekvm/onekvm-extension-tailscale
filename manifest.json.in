@@ -96,9 +96,6 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
-      "auth_key",
-      "hostname",
-      "control_url",
       "accept_routes",
       "shields_up",
       "port"
