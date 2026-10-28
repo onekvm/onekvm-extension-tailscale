@@ -1,7 +1,8 @@
 # 浏览器授权的有效期
 
-以下结论核对了当前打包的 Tailscale 1.104.1 源码
-`9a522a9786c97eb7910c01ccb7bd66557b04c910`（2026-10-24）。
+以下结论核对了当前打包的 Tailscale 1.104.4 源码
+`27047635f237d1f3e0b08c0f487674757f30d2f7`（2026-10-28），登录 URL 的复用规则见
+`ipn/ipnlocal/local.go` 中的 `StartLoginInteractiveAs`。
 
 | 对象 | 有效期与依据 |
 | --- | --- |
