@@ -310,7 +310,7 @@
       .ts-status-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
       .ts-status small, .ts-settings small, .ts-muted { color: var(--n-text-color-3, #888); }
       .ts-addresses, .ts-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-      .ts-addresses code, .ts-auth > code { color: var(--n-text-color-1, #e5e7eb); font-family: var(--onekvm-font-mono, ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace); font-size: 13px; font-feature-settings: "tnum" 1, "zero" 1; font-variant-numeric: tabular-nums slashed-zero; font-weight: 500; line-height: 1.5; letter-spacing: .01em; }
+      .ts-addresses code, .ts-auth > code { color: var(--foreground, currentColor); font-family: var(--onekvm-font-mono, ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace); font-size: 13px; font-feature-settings: "tnum" 1, "zero" 1; font-variant-numeric: tabular-nums slashed-zero; font-weight: 500; line-height: 1.5; letter-spacing: .01em; }
       .ts-auth { display: grid; gap: 9px; padding: 12px; border-radius: 7px; background: var(--n-color-modal, rgba(127,127,127,.08)); }
       .ts-auth code { overflow-wrap: anywhere; }
       .ts-auth a { text-decoration: none; }
