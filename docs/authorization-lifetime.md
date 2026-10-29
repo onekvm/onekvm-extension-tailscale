@@ -64,3 +64,17 @@ OneKVM 对两个提供方统一限制 **300 秒**：从当前 URL 首次可用�
 - [LocalAPI Status 字段](https://github.com/tailscale/tailscale/blob/9a522a9786c97eb7910c01ccb7bd66557b04c910/ipn/ipnstate/ipnstate.go#L41)
 - [官方 CLI 文档](https://tailscale.com/docs/reference/tailscale-cli)
 - [官方设备密钥到期说明](https://tailscale.com/docs/features/access-control/key-expiry)
+
+## Web 密钥连接
+
+在扩展页面点击“使用密钥连接”，在弹窗粘贴密钥并点击“连接”。连接前保存
+当前服务器与网络选项；成功后关闭弹窗，失败时保留输入供重试。取消未提交的
+输入不会保存密钥；取消正在进行的连接会终止本次尝试。关闭弹窗时清空输入。
+
+`connect_key` 方法使用已保存的密钥发起连接，由同一个后台监督进程负责状态、
+失败和取消；它不生成浏览器登录链接。同一密钥可直接重试，不依赖再次修改设置。
+配置重载自动发起的密钥连接会由显式尝试接管，避免两个连接进程同时运行。
+浏览器连接会先清除旧密钥，避免同时触发旧密钥注册。
+
+前端交互回归：`node tests/page.test.cjs`；后台事件回归沿用
+`tests/service-test.py`，覆盖密钥校验、失败、成功、重试、取消和密钥文件权限。

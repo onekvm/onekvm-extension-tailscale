@@ -76,6 +76,13 @@
       ]
     },
     {
+      "name": "connect_key",
+      "command": [
+        "bin/onekvm-tailscale-controller",
+        "connect-key"
+      ]
+    },
+    {
       "name": "disconnect",
       "command": [
         "bin/onekvm-tailscale-controller",
