@@ -140,6 +140,14 @@ def replace_once(text: str, pattern: str, replacement: str, description: str) ->
     return updated
 
 
+def set_github_output(name: str, value: str) -> None:
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+    with open(output_path, "a", encoding="utf-8") as output:
+        output.write(f"{name}={value}\n")
+
+
 def update_files(state: dict[str, str | Path], version: str, commit: str) -> None:
     bbappend = Path(state["bbappend"])
     recipe = Path(state["recipe"])
@@ -209,6 +217,7 @@ def main() -> int:
 
     print(f"Tailscale release: {latest} ({commit})")
     print(f"Pinned extension: {state['version']} ({state['srcrev']})")
+    set_github_output("version", latest)
     if problems:
         for problem in problems:
             print(f"ERROR: {problem}", file=sys.stderr)
