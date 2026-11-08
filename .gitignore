@@ -9,6 +9,9 @@
 *.ipk
 *.ipks
 
+# Local documentation
+/docs/
+
 # Local editor and OS files
 .DS_Store
 *.swp

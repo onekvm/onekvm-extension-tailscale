@@ -1,0 +1,43 @@
+name: Check Tailscale release
+
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tailscale-version-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the extension
+        uses: actions/checkout@v4
+
+      - name: Check and update the pinned release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/check-tailscale-version.py --update
+
+      - name: Open a pull request for a new release
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          base: main
+          branch: automation/tailscale-version
+          delete-branch: true
+          commit-message: "build(tailscale): update to the latest release"
+          title: "build(tailscale): update to the latest release"
+          body: |
+            This pull request was opened by the daily Tailscale release check.
+
+            It updates the pinned Tailscale release, source revision, extension package version, and runtime dependency together.
+
+            Please run the normal OpenEmbedded update and package validation before merging. If the upstream release changed Go modules or license files, regenerate the checked metadata in `oe-recipes/recipes-connectivity/tailscale/` as part of this pull request.
