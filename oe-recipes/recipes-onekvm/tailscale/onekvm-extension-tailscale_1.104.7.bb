@@ -26,7 +26,7 @@ EXTRA_OECMAKE += " \
 # meta-networking's tailscale package owns both /usr/bin/tailscale and
 # /usr/sbin/tailscaled. Deliberately do not depend on its tailscaled service
 # package: the extension host owns the daemon lifecycle and state directory.
-RDEPENDS:${PN} += "tailscale (>= 1.104.5) onekvm-kernel-module-tun"
+RDEPENDS:${PN} += "tailscale (>= 1.104.7) onekvm-kernel-module-tun"
 RREPLACES:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
 RCONFLICTS:${PN} += "onekvm-extension-tailscale-runtime (<= 1.0.0-r1)"
 
