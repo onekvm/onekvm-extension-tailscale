@@ -1,7 +1,7 @@
 # Keep the pinned meta-networking provider and its service/package split.
 # Only the upstream source, dependency metadata and compiler are updated here.
-PV = "1.104.5"
-SRCREV = "73a48057aaf5f60e4f770b398e9b7af576b01dbe"
+PV = "1.104.7"
+SRCREV = "cbc74fe48ef1b1649f69a4d9a602319427e25102"
 
 SRC_URI = "git://github.com/tailscale/tailscale.git;protocol=https;branch=release-branch/${MAJOR_MINOR};destsuffix=${GO_SRCURI_DESTSUFFIX} \
            file://default \
@@ -12,7 +12,7 @@ LIC_FILES_CHKSUM = "file://src/${GO_IMPORT}/LICENSE;md5=cadeae10a8856ddfdb129866
 require tailscale-go-mods.inc
 require tailscale-licenses.inc
 
-# Tailscale 1.104.5 requires Go 1.27.3. Use a recipe-private compiler,
+# Tailscale 1.104.7 requires Go 1.27.3. Use a recipe-private compiler,
 # leaving the distribution's Go 1.26 cross toolchain and other clients intact.
 DEPENDS_GOLANG:class-target = "onekvm-tailscale-go-native"
 GO = "${STAGING_BINDIR_NATIVE}/go"
