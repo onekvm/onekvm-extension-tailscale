@@ -844,6 +844,11 @@ int RunOAuth(std::string &error) {
 } // namespace
 
 int main(int argc, char **argv) {
+  if (std::getenv("ONEKVM_EXTENSION_ID") != nullptr &&
+      EnvironmentPath("ONEKVM_EXTENSION_RUNTIME_IDENTITY", "") != "dedicated") {
+    std::cerr << "onekvm-tailscale-controller: dedicated extension account required\n";
+    return 78;
+  }
   std::string error;
   int result = 1;
   const std::string_view command = argc >= 2 ? argv[1] : "--service";
